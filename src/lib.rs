@@ -1,4 +1,6 @@
 //! A barebones configuration file made for low-dependancy rust applications.
+//! 
+//! **You may want to see [parse_str] for the main feature of this crate**.
 //!
 //! Under the hood, it uses a simple line-by-line parsing technique. Overall, superconf
 //! is desgined to be fast to develop and "good enough" for a simple configuration
@@ -69,14 +71,20 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
         let mut key_buf = String::new();
         let mut val_buf = String::new();
 
+        let mut is_comment = false;
         let mut in_key_buf = true;
         let mut ignore_space = false;
 
         for token in token_line {
             match token {
-                TokenType::Comment => break,
+                TokenType::Comment => {
+                    is_comment = true;
+                    break;
+                }
                 TokenType::Backslash => ignore_space = !ignore_space,
                 TokenType::Character(c) => {
+                    ignore_space = false;
+
                     if in_key_buf {
                         key_buf.push(c)
                     } else {
@@ -84,7 +92,15 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
                     }
                 }
                 TokenType::Space => {
-                    if !ignore_space {
+                    if ignore_space {
+                        if in_key_buf {
+                            key_buf.push(' ')
+                        } else {
+                            val_buf.push(' ')
+                        }
+
+                        ignore_space = false;
+                    } else {
                         if !in_key_buf {
                             return Err(SuperError::TooManyElements);
                         }
@@ -93,6 +109,10 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
                     }
                 }
             }
+        }
+
+        if is_comment {
+            continue;
         }
 
         if key_buf.is_empty() {
@@ -117,5 +137,23 @@ mod tests {
         let input = "my_key my_value";
 
         parse_str(input).unwrap();
+    }
+
+    /// Tests that comments are working properly
+    #[test]
+    fn comment_test() {
+        let input = "# This is a line comment, should not return any output!";
+
+        assert_eq!(Ok(HashMap::new()), parse_str(input));
+    }
+
+    /// Tests valid keys that include backstroke spaces as a torture test
+    #[test]
+    fn backstroke_space_torture() {
+        let input = "my\\ key this\\ is\\ the\\ value";
+        let mut exp_output = HashMap::new();
+        exp_output.insert("my key".to_string(), "this is the value".to_string());
+
+        assert_eq!(Ok(exp_output), parse_str(input))
     }
 }
