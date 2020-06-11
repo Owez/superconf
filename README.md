@@ -35,6 +35,14 @@ my_key the_value
 
 # you can use spaces, just have to be backslashed
 your_path /home/user/Cool\ Path/x.txt
+
+# you can also have multiple levels
+# will be:
+# {"other_key": {"in_level": "see_it_is", "second_level": {"another": "level"}}}
+other_key
+    in_level see_it_is
+    second_level
+        another level
 ```
 
 You can find more examples in the `examples/` directory next to this readme.

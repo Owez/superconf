@@ -33,6 +33,14 @@
 //!
 //! # you can use spaces, just have to be backslashed
 //! your_path /home/user/Cool\ Path/x.txt
+//!
+//! # you can also have multiple levels
+//! # will be:
+//! # {"other_key": {"in_level": "see_it_is", "second_level": {"another": "level"}}}
+//! other_key
+//!     in_level see_it_is
+//!     second_level
+//!         another level
 //! ```
 //!
 //! # Config Conventions
@@ -119,9 +127,10 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
         let mut key_buf = String::new();
         let mut val_buf = String::new();
 
-        let mut is_comment = false;
-        let mut in_key_buf = true;
-        let mut ignore_space = false;
+        let mut is_comment = false; // if detected a comment, used to skip adding to output
+        let mut in_key_buf = true; // if it should be in [key_buf] or [val_buf]
+        let mut ignore_special = false; // a catcher for special chars prefixed with 1 `\`
+        let mut precomment_whitespace = false; // for detecting a 3rd element (`z` in `x y z`)
 
         for token in token_line {
             match token {
@@ -129,28 +138,33 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
                     is_comment = true;
                     break;
                 }
-                TokenType::Backslash => ignore_space = !ignore_space,
+                TokenType::Backslash => ignore_special = !ignore_special,
                 TokenType::Character(c) => {
-                    ignore_space = false;
+                    ignore_special = false;
 
                     if in_key_buf {
+                        if precomment_whitespace {
+                            // after 2nd element with space in-between
+                            return Err(SuperError::TooManyElements);
+                        }
+
                         key_buf.push(c)
                     } else {
                         val_buf.push(c)
                     }
                 }
                 TokenType::Space => {
-                    if ignore_space {
+                    if ignore_special {
                         if in_key_buf {
                             key_buf.push(' ')
                         } else {
                             val_buf.push(' ')
                         }
 
-                        ignore_space = false;
+                        ignore_special = false;
                     } else {
                         if !in_key_buf {
-                            return Err(SuperError::TooManyElements);
+                            precomment_whitespace = true;
                         }
 
                         in_key_buf = false;
@@ -238,5 +252,19 @@ mod tests {
         );
 
         assert_eq!(exp_output, parse_str(input).unwrap());
+    }
+
+    /// Tests that eol comments like  the `# hi` in:
+    ///
+    /// ```superconf
+    /// my_key my_value # hi
+    /// ```
+    ///
+    /// Work properly
+    #[test]
+    fn eol_comment() {
+        let input = "my_key my_value # eol comment";
+
+        parse_str(input).unwrap();
     }
 }
