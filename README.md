@@ -1,6 +1,6 @@
 # superconf
 
-A barebones configuration file made for low-dependancy rust applications.
+A barebones configuration file made for low-dependency rust applications.
 
 ## Usage
 
@@ -8,7 +8,7 @@ Add to your `Cargo.toml` file:
 
 ```toml
 [dependancies]
-superconf = "0.1.0"
+superconf = "0.1"
 ```
 
 Then you can parse a basic string like so:
