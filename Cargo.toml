@@ -2,7 +2,8 @@
 name = "superconf"
 description = "A barebones configuration file made for low-dependancy rust applications."
 version = "0.1.0"
+readme = "README.md"
+license = "MIT"
+repository = "https://gitlab.com/scowez/superconf"
 authors = ["Owez <owez@scalist.net>"]
 edition = "2018"
-
-[dependencies]

@@ -213,7 +213,7 @@ mod tests {
     fn comment_test() {
         let input = "# This is a line comment, should not return any output!";
 
-        assert_eq!(Ok(HashMap::new()), parse_str(input));
+        assert_eq!(HashMap::new(), parse_str(input).unwrap());
     }
 
     /// Tests valid keys that include backstroke spaces as a torture test
@@ -223,7 +223,7 @@ mod tests {
         let mut exp_output = HashMap::new();
         exp_output.insert("my key".to_string(), "this is the value".to_string());
 
-        assert_eq!(Ok(exp_output), parse_str(input))
+        assert_eq!(exp_output, parse_str(input).unwrap())
     }
 
     /// Tests a realistic-looking path
@@ -237,6 +237,6 @@ mod tests {
             "/home/user/Cool Path/x.txt".to_string(),
         );
 
-        assert_eq!(Ok(exp_output), parse_str(input));
+        assert_eq!(exp_output, parse_str(input).unwrap());
     }
 }
