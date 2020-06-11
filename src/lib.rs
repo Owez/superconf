@@ -40,7 +40,7 @@
 //! Some conventions commonly used for superconf files:
 //!
 //! - The file naming scheme is `snake_case`
-//! - All superconf files should end in the `.sc` file extension
+//! - All superconf files should end in the `.super` file extension
 //! - Try to document each line with a comment
 //! - If commented, space each config part with an empty line seperating it from
 //! others. If it is undocumented, you may bunch all config parts together
