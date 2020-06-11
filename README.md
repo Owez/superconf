@@ -39,7 +39,7 @@ your_path /home/user/Cool\ Path/x.txt
 
 You can find more examples in the `examples/` directory next to this readme.
 
-## Config conventions
+## Config Conventions
 
 Some conventions commonly used for superconf files:
 

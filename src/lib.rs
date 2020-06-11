@@ -1,6 +1,6 @@
 //! A barebones configuration file made for low-dependancy rust applications.
 //!
-//! ## Usage
+//! # Usage
 //!
 //! Add to your `Cargo.toml` file:
 //!
@@ -19,7 +19,7 @@
 //! println!("Outputted HashMap: {:#?}", parse_str(input).unwrap());
 //! ```
 //!
-//! ## Example
+//! # Example
 //!
 //! Here is a complete syntax demonstration:
 //!
@@ -35,7 +35,7 @@
 //! your_path /home/user/Cool\ Path/x.txt
 //! ```
 //!
-//! ## Config conventions
+//! # Config Conventions
 //!
 //! Some conventions commonly used for superconf files:
 //!
@@ -45,16 +45,19 @@
 //! - If commented, space each config part with an empty line seperating it from
 //! others. If it is undocumented, you may bunch all config parts together
 //!
-//! ## Motives
+//! # Motives
 //!
 //! Made this as a quick custom parser to challange myself a bit and to use for
 //! a quick-n-dirty configuration format in the future. It's not the best file
 //! format in the world but it gets the job done.
 
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::PathBuf;
 
 /// Primary error enum for superconf, storing the common errors faced.
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug)]
 pub enum SuperError {
     /// When a line had a key but no value, e.g. `my_key`
     NoKey,
@@ -68,6 +71,9 @@ pub enum SuperError {
     /// **You may face this when accidently adding a space without a `\`
     /// beforehand!**
     TooManyElements,
+
+    /// An IO error stemming from [parse_file].
+    IOError(std::io::Error),
 }
 
 /// The type of token for the mini lexer
@@ -79,7 +85,8 @@ enum TokenType {
     Comment,
 }
 
-/// Lexes input into [Vec]<[Vec]<[TokenType]>> (top level for line, 2nd level for each char in line).
+/// Lexes input into [Vec]<[Vec]<[TokenType]>> (top level for line, 2nd level
+/// for each char in line).
 fn lex_str(conf: &str) -> Vec<Vec<TokenType>> {
     let mut output: Vec<Vec<TokenType>> = vec![];
 
@@ -166,6 +173,27 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
     }
 
     Ok(output)
+}
+
+/// An alias to the more common [parse_str], allowing for easy usage with
+/// [String]s.
+pub fn parse_string(conf: String) -> Result<HashMap<String, String>, SuperError> {
+    parse_str(&conf)
+}
+
+/// Opens a [PathBuf]-type file and parses contents.
+pub fn parse_file(conf_path: PathBuf) -> Result<HashMap<String, String>, SuperError> {
+    let mut file = match File::open(conf_path) {
+        Ok(f) => f,
+        Err(e) => return Err(SuperError::IOError(e)),
+    };
+
+    let mut contents = String::new();
+
+    match file.read_to_string(&mut contents) {
+        Ok(_) => parse_string(contents),
+        Err(e) => Err(SuperError::IOError(e)),
+    }
 }
 
 #[cfg(test)]
