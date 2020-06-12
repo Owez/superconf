@@ -74,14 +74,29 @@ pub enum SuperError {
     /// parsing due to the nature of the library.
     NoValue,
 
-    /// When too many elements where given, e.g. `my_key my_value stickler`.
+    /// When adding elements and two are named with the same key, e.g:
     ///
-    /// **You may face this when accidently adding a space without a `\`
-    /// beforehand!**
-    TooManyElements,
+    /// ```superconf
+    /// my_value original
+    /// my_value this_will_error
+    /// ```
+    ElementExists(SuperValue),
 
     /// An IO error stemming from [parse_file].
     IOError(std::io::Error),
+}
+
+/// The possible value of the config file.
+///
+/// Ususally a [SuperValue::Single] if 1 is provided or [SuperValue::List] if 2
+/// or more are.
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub enum SuperValue {
+    /// A single element provided, e.g. `my_key element`
+    Single(String),
+
+    /// Multiple elements provided, e.g. `my_key first_element second_element`
+    List(Vec<String>),
 }
 
 /// The type of token for the mini lexer
@@ -119,57 +134,41 @@ fn lex_str(conf: &str) -> Vec<Vec<TokenType>> {
 }
 
 /// Parses given &[str] `conf` input.
-pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
-    let mut output: HashMap<String, String> = HashMap::new();
+pub fn parse_str(conf: &str) -> Result<HashMap<String, SuperValue>, SuperError> {
+    let mut output: HashMap<String, SuperValue> = HashMap::new();
     let tokens = lex_str(conf);
 
-    for token_line in tokens {
-        let mut key_buf = String::new();
-        let mut val_buf = String::new();
+    let mut _expect_new_level = false; // if only 1 key was found in line, expect a new level
 
-        let mut is_comment = false; // if detected a comment, used to skip adding to output
-        let mut in_key_buf = true; // if it should be in [key_buf] or [val_buf]
+    for token_line in tokens {
+        // TODO: use `_expect_new_level` up here
+
+        let mut buffer = vec![String::new()];
+
         let mut ignore_special = false; // a catcher for special chars prefixed with 1 `\`
-        let mut precomment_whitespace = false; // for detecting a 3rd element (`z` in `x y z`)
+        let mut is_comment = false; // used for skipping appends to output
 
         for token in token_line {
             match token {
                 TokenType::Comment => {
+                    // say its a comment then exit line
                     is_comment = true;
                     break;
                 }
-                TokenType::Backslash => ignore_special = !ignore_special,
-                TokenType::Character(c) => {
-                    ignore_special = false;
-
-                    if in_key_buf {
-                        if precomment_whitespace {
-                            // after 2nd element with space in-between
-                            return Err(SuperError::TooManyElements);
-                        }
-
-                        key_buf.push(c)
-                    } else {
-                        val_buf.push(c)
-                    }
-                }
+                TokenType::Backslash => ignore_special = !ignore_special, // switch ignore special
                 TokenType::Space => {
+                    // handle a space, ensuring that `\`'s are handled
                     if ignore_special {
-                        if in_key_buf {
-                            key_buf.push(' ')
-                        } else {
-                            val_buf.push(' ')
-                        }
+                        // add a space to buffer if it was backslashed
+                        buffer.last_mut().unwrap().push(' ');
 
                         ignore_special = false;
-                    } else {
-                        if !in_key_buf {
-                            precomment_whitespace = true;
-                        }
-
-                        in_key_buf = false;
+                    } else if !buffer.last().unwrap().is_empty() {
+                        // add new string to value buffer
+                        buffer.push(String::new())
                     }
                 }
+                TokenType::Character(c) => buffer.last_mut().unwrap().push(c),
             }
         }
 
@@ -177,13 +176,21 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
             continue;
         }
 
-        if key_buf.is_empty() {
-            return Err(SuperError::NoKey);
-        } else if val_buf.is_empty() {
-            return Err(SuperError::NoValue);
-        }
+        let key = buffer.remove(0);
 
-        output.insert(key_buf, val_buf);
+        let final_value = match buffer.len() {
+            0 => {
+                _expect_new_level = true;
+                continue;
+            } // looks to be a new level, expect it
+            1 => SuperValue::Single(buffer[0].clone()),
+            _ => SuperValue::List(buffer),
+        };
+
+        match output.insert(key, final_value) {
+            Some(element) => return Err(SuperError::ElementExists(element)),
+            None => (),
+        };
     }
 
     Ok(output)
@@ -191,12 +198,12 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, String>, SuperError> {
 
 /// An alias to the more common [parse_str], allowing for easy usage with
 /// [String]s.
-pub fn parse_string(conf: String) -> Result<HashMap<String, String>, SuperError> {
+pub fn parse_string(conf: String) -> Result<HashMap<String, SuperValue>, SuperError> {
     parse_str(&conf)
 }
 
 /// Opens a [PathBuf]-type file and parses contents.
-pub fn parse_file(conf_path: PathBuf) -> Result<HashMap<String, String>, SuperError> {
+pub fn parse_file(conf_path: PathBuf) -> Result<HashMap<String, SuperValue>, SuperError> {
     let mut file = match File::open(conf_path) {
         Ok(f) => f,
         Err(e) => return Err(SuperError::IOError(e)),
@@ -235,7 +242,10 @@ mod tests {
     fn backstroke_space_torture() {
         let input = "my\\ key this\\ is\\ the\\ value";
         let mut exp_output = HashMap::new();
-        exp_output.insert("my key".to_string(), "this is the value".to_string());
+        exp_output.insert(
+            "my key".to_string(),
+            SuperValue::Single("this is the value".to_string()),
+        );
 
         assert_eq!(exp_output, parse_str(input).unwrap())
     }
@@ -248,7 +258,7 @@ mod tests {
         let mut exp_output = HashMap::new();
         exp_output.insert(
             "your_path".to_string(),
-            "/home/user/Cool Path/x.txt".to_string(),
+            SuperValue::Single("/home/user/Cool Path/x.txt".to_string()),
         );
 
         assert_eq!(exp_output, parse_str(input).unwrap());
@@ -260,11 +270,24 @@ mod tests {
     /// my_key my_value # hi
     /// ```
     ///
-    /// Work properly
+    /// Work properly.
     #[test]
     fn eol_comment() {
         let input = "my_key my_value # eol comment";
 
         parse_str(input).unwrap();
+    }
+
+    /// Tests that lists properly work
+    #[test]
+    fn item_list() {
+        let input = "my_key first_val second_val";
+
+        let mut exp_out = HashMap::new();
+        exp_out.insert(
+            "my_key".to_string(),
+            SuperValue::List(vec!["first_val".to_string(), "second_val".to_string()]),
+        );
+        assert_eq!(exp_out, parse_str(input).unwrap());
     }
 }
