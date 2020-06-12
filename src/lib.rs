@@ -6,7 +6,7 @@
 //!
 //! ```toml
 //! [dependancies]
-//! superconf = "0.1"
+//! superconf = "0.2"
 //! ```
 //!
 //! Then you can parse a basic string like so:
