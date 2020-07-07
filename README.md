@@ -7,7 +7,7 @@ A barebones configuration file made for low-dependency rust applications.
 Add to your `Cargo.toml` file:
 
 ```toml
-[dependancies]
+[dependencies]
 superconf = "0.2"
 ```
 
