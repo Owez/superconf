@@ -9,7 +9,9 @@
 //! superconf = "0.2"
 //! ```
 //!
-//! Then you can parse a basic string like so:
+//! # Examples
+//!
+//! Default seperator (space ` `) demonstration:
 //!
 //! ```rust
 //! use superconf::parse_str;
@@ -19,19 +21,29 @@
 //! println!("Outputted HashMap: {:#?}", parse_str(input).unwrap());
 //! ```
 //!
-//! # Example
+//! Or if you'd like to use a custom seperator like `:` or `=`:
+//!
+//! ```rust
+//! use superconf::parse_custom_sep;
+//!
+//! let input_equal = "custom=seperator";
+//! let input_colon = "second:string";
+//!
+//! println!("Equals seperator: {:#?}", parse_custom_sep(input_equal, '=').unwrap());
+//! println!("Colon seperator: {:#?}", parse_custom_sep(input_colon, ':').unwrap());
+//! ```
 //!
 //! Here is a complete syntax demonstration:
 //!
 //! ```none
 //! # comments are like this
-//! # no spaces are allowed in keys or values
+//! # no seperators are allowed in keys or values
 //! # comments can only be at the start of lines, no end of line comments here
 //!
 //! # my_key is the key, my_value is the value
 //! my_key the_value
 //!
-//! # you can use spaces, just have to be backslashed
+//! # you can use seperators as plaintext, just have to be backslashed
 //! your_path /home/user/Cool\ Path/x.txt
 //!
 //! # you can also have multiple levels
@@ -103,25 +115,28 @@ pub enum SuperValue {
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 enum TokenType {
     Character(char),
-    Space,
+    Seperator,
     Backslash,
     Comment,
 }
 
 /// Lexes input into [Vec]<[Vec]<[TokenType]>> (top level for line, 2nd level
 /// for each char in line).
-fn lex_str(conf: &str) -> Vec<Vec<TokenType>> {
+fn lex_str(conf: &str, seperator: char) -> Vec<Vec<TokenType>> {
     let mut output: Vec<Vec<TokenType>> = vec![];
 
     for line in conf.lines() {
         let mut buffer: Vec<TokenType> = vec![];
 
         for line_char in line.chars() {
-            let got_token = match line_char {
-                ' ' => TokenType::Space,
-                '#' => TokenType::Comment,
-                '\\' => TokenType::Backslash,
-                t => TokenType::Character(t),
+            let got_token = if line_char == seperator {
+                TokenType::Seperator
+            } else {
+                match line_char {
+                    '#' => TokenType::Comment,
+                    '\\' => TokenType::Backslash,
+                    t => TokenType::Character(t),
+                }
             };
 
             buffer.push(got_token);
@@ -133,10 +148,14 @@ fn lex_str(conf: &str) -> Vec<Vec<TokenType>> {
     output
 }
 
-/// Parses given &[str] `conf` input.
-pub fn parse_str(conf: &str) -> Result<HashMap<String, SuperValue>, SuperError> {
+/// Similar to [parse_str] but can enter a custom seperator other then the
+/// default ` ` (space) character
+pub fn parse_custom_sep(
+    conf: &str,
+    seperator: char,
+) -> Result<HashMap<String, SuperValue>, SuperError> {
     let mut output: HashMap<String, SuperValue> = HashMap::new();
-    let tokens = lex_str(conf);
+    let tokens = lex_str(conf, seperator);
 
     let mut _expect_new_level = false; // if only 1 key was found in line, expect a new level
 
@@ -156,10 +175,10 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, SuperValue>, SuperError> 
                     break;
                 }
                 TokenType::Backslash => ignore_special = !ignore_special, // switch ignore special
-                TokenType::Space => {
-                    // handle a space, ensuring that `\`'s are handled
+                TokenType::Seperator => {
+                    // handle a seperator, ensuring that `\`'s are handled
                     if ignore_special {
-                        // add a space to buffer if it was backslashed
+                        // add seperator to buffer if it was backslashed
                         buffer.last_mut().unwrap().push(' ');
 
                         ignore_special = false;
@@ -196,10 +215,15 @@ pub fn parse_str(conf: &str) -> Result<HashMap<String, SuperValue>, SuperError> 
     Ok(output)
 }
 
+/// Parses given &[str] `conf` input.
+pub fn parse_str(conf: &str) -> Result<HashMap<String, SuperValue>, SuperError> {
+    parse_custom_sep(conf, ' ')
+}
+
 /// An alias to the more common [parse_str], allowing for easy usage with
 /// [String]s.
 pub fn parse_string(conf: String) -> Result<HashMap<String, SuperValue>, SuperError> {
-    parse_str(&conf)
+    parse_custom_sep(&conf, ' ')
 }
 
 /// Opens a [PathBuf]-type file and parses contents.
@@ -237,9 +261,9 @@ mod tests {
         assert_eq!(HashMap::new(), parse_str(input).unwrap());
     }
 
-    /// Tests valid keys that include backstroke spaces as a torture test
+    /// Tests valid keys that include backstroke seperators as a torture test
     #[test]
-    fn backstroke_space_torture() {
+    fn backstroke_seperator_torture() {
         let input = "my\\ key this\\ is\\ the\\ value";
         let mut exp_output = HashMap::new();
         exp_output.insert(
