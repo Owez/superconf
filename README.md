@@ -6,7 +6,7 @@ Add to your `Cargo.toml` file:
 
 ```toml
 [dependancies]
-superconf = "0.2"
+superconf = "0.3"
 ```
 
 # Examples
