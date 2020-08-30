@@ -1,6 +1,8 @@
+# superconf
+
 A barebones configuration file made for low-dependency rust applications.
 
-# Usage
+## Usage
 
 Add to your `Cargo.toml` file:
 
@@ -9,7 +11,7 @@ Add to your `Cargo.toml` file:
 superconf = "0.3"
 ```
 
-# Examples
+## Examples
 
 Default seperator (space ` `) demonstration:
 
@@ -55,7 +57,7 @@ other_key
         another level
 ```
 
-# Config Conventions
+## Config Conventions
 
 Some conventions commonly used for superconf files:
 
@@ -65,7 +67,7 @@ Some conventions commonly used for superconf files:
 - If commented, space each config part with an empty line seperating it from
 others. If it is undocumented, you may bunch all config parts together
 
-# Motives
+## Motives
 
 Made this as a quick custom parser to challenge myself a bit and to use for
 a quick-n-dirty configuration format in the future. It's not the best file
