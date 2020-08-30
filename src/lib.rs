@@ -67,7 +67,7 @@
 //!
 //! # Motives
 //!
-//! Made this as a quick custom parser to challange myself a bit and to use for
+//! Made this as a quick custom parser to challenge myself a bit and to use for
 //! a quick-n-dirty configuration format in the future. It's not the best file
 //! format in the world but it gets the job done.
 
@@ -313,5 +313,18 @@ mod tests {
             SuperValue::List(vec!["first_val".to_string(), "second_val".to_string()]),
         );
         assert_eq!(exp_out, parse_str(input).unwrap());
+    }
+
+    /// Ensures custom seperators are properly parsed
+    #[test]
+    fn custom_seperator() {
+        let input = "arrow>demonstration";
+
+        let mut exp_out = HashMap::new();
+        exp_out.insert(
+            "arrow".to_string(),
+            SuperValue::Single(String::from("demonstration")),
+        );
+        assert_eq!(exp_out, parse_custom_sep(input, '>').unwrap());
     }
 }
