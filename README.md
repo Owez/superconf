@@ -16,11 +16,11 @@ superconf = "0.4"
 Default seperator (space ` `) demonstration:
 
 ```rust
-use superconf::parse_str;
+use superconf;
 
 let input = "my_key my_value";
 
-println!("{:#?}", parse(input).unwrap());
+println!("{:#?}", superconf::parse(input).unwrap());
 ```
 
 Or if you'd like to use a custom seperator like `:` or `=`:

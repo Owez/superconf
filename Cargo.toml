@@ -1,7 +1,7 @@
 [package]
 name = "superconf"
 description = "A barebones configuration file made for low-dependency rust applications."
-version = "0.4.1"
+version = "0.4.2"
 readme = "README.md"
 license = "MIT"
 repository = "https://gitlab.com/Owez/superconf"
