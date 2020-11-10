@@ -14,11 +14,11 @@
 //! Default seperator (space ` `) demonstration:
 //!
 //! ```rust
-//! use superconf::parse_str;
+//! use superconf::parse;
 //!
 //! let input = "my_key my_value";
 //!
-//! println!("Outputted HashMap: {:#?}", parse_str(input).unwrap());
+//! println!("Outputted HashMap: {:#?}", parse(input).unwrap());
 //! ```
 //!
 //! Or if you'd like to use a custom seperator like `:` or `=`:
@@ -148,7 +148,7 @@ fn lex_str(conf: &str, seperator: char) -> Vec<Vec<TokenType>> {
     output
 }
 
-/// Similar to [parse_str] but can enter a custom seperator other then the
+/// Similar to [parse] but can enter a custom seperator other then the
 /// default ` ` (space) character
 pub fn parse_custom_sep(
     conf: &str,
@@ -215,15 +215,9 @@ pub fn parse_custom_sep(
     Ok(output)
 }
 
-/// Parses given &[str] `conf` input.
-pub fn parse_str(conf: &str) -> Result<HashMap<String, SuperValue>, SuperError> {
-    parse_custom_sep(conf, ' ')
-}
-
-/// An alias to the more common [parse_str], allowing for easy usage with
-/// [String]s.
-pub fn parse_string(conf: String) -> Result<HashMap<String, SuperValue>, SuperError> {
-    parse_custom_sep(&conf, ' ')
+/// Parses given `conf` input.
+pub fn parse(conf: impl AsRef<str>) -> Result<HashMap<String, SuperValue>, SuperError> {
+    parse_custom_sep(conf.as_ref(), ' ')
 }
 
 /// Opens a [PathBuf]-type file and parses contents.
@@ -236,7 +230,7 @@ pub fn parse_file(conf_path: PathBuf) -> Result<HashMap<String, SuperValue>, Sup
     let mut contents = String::new();
 
     match file.read_to_string(&mut contents) {
-        Ok(_) => parse_string(contents),
+        Ok(_) => parse(contents),
         Err(e) => Err(SuperError::IOError(e)),
     }
 }
@@ -250,7 +244,7 @@ mod tests {
     fn basic_parse() {
         let input = "my_key my_value";
 
-        parse_str(input).unwrap();
+        parse(input).unwrap();
     }
 
     /// Tests that comments are working properly
@@ -258,7 +252,7 @@ mod tests {
     fn comment_test() {
         let input = "# This is a line comment, should not return any output!";
 
-        assert_eq!(HashMap::new(), parse_str(input).unwrap());
+        assert_eq!(HashMap::new(), parse(input).unwrap());
     }
 
     /// Tests valid keys that include backstroke seperators as a torture test
@@ -271,7 +265,7 @@ mod tests {
             SuperValue::Single("this is the value".to_string()),
         );
 
-        assert_eq!(exp_output, parse_str(input).unwrap())
+        assert_eq!(exp_output, parse(input).unwrap())
     }
 
     /// Tests a realistic-looking path
@@ -285,7 +279,7 @@ mod tests {
             SuperValue::Single("/home/user/Cool Path/x.txt".to_string()),
         );
 
-        assert_eq!(exp_output, parse_str(input).unwrap());
+        assert_eq!(exp_output, parse(input).unwrap());
     }
 
     /// Tests that eol comments like  the `# hi` in:
@@ -299,7 +293,7 @@ mod tests {
     fn eol_comment() {
         let input = "my_key my_value # eol comment";
 
-        parse_str(input).unwrap();
+        parse(input).unwrap();
     }
 
     /// Tests that lists properly work
@@ -312,7 +306,7 @@ mod tests {
             "my_key".to_string(),
             SuperValue::List(vec!["first_val".to_string(), "second_val".to_string()]),
         );
-        assert_eq!(exp_out, parse_str(input).unwrap());
+        assert_eq!(exp_out, parse(input).unwrap());
     }
 
     /// Ensures custom seperators are properly parsed
@@ -331,7 +325,10 @@ mod tests {
     #[test]
     fn custom_seperator_space() {
         let mut output: HashMap<String, SuperValue> = HashMap::new();
-        output.insert("hi".into(), SuperValue::Single("is cool?: no..".to_string()));
+        output.insert(
+            "hi".into(),
+            SuperValue::Single("is cool?: no..".to_string()),
+        );
 
         assert_eq!(
             parse_custom_sep("hi:is cool?\\: no..", ':').unwrap(),
