@@ -327,4 +327,15 @@ mod tests {
         );
         assert_eq!(exp_out, parse_custom_sep(input, '>').unwrap());
     }
+
+    #[test]
+    fn custom_seperator_space() {
+        let mut output: HashMap<String, SuperValue> = HashMap::new();
+        output.insert("hi".into(), SuperValue::Single("is cool?: no".to_string()));
+
+        assert_eq!(
+            parse_custom_sep("hi:is cool?\\: no..", ':').unwrap(),
+            output
+        )
+    }
 }
