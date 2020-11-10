@@ -179,7 +179,7 @@ pub fn parse_custom_sep(
                     // handle a seperator, ensuring that `\`'s are handled
                     if ignore_special {
                         // add seperator to buffer if it was backslashed
-                        buffer.last_mut().unwrap().push(' ');
+                        buffer.last_mut().unwrap().push(seperator);
 
                         ignore_special = false;
                     } else if !buffer.last().unwrap().is_empty() {
@@ -331,7 +331,7 @@ mod tests {
     #[test]
     fn custom_seperator_space() {
         let mut output: HashMap<String, SuperValue> = HashMap::new();
-        output.insert("hi".into(), SuperValue::Single("is cool?: no".to_string()));
+        output.insert("hi".into(), SuperValue::Single("is cool?: no..".to_string()));
 
         assert_eq!(
             parse_custom_sep("hi:is cool?\\: no..", ':').unwrap(),
