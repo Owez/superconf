@@ -8,7 +8,7 @@ Add to your `Cargo.toml` file:
 
 ```toml
 [dependancies]
-superconf = "0.3"
+superconf = "0.4"
 ```
 
 ## Examples
@@ -20,7 +20,7 @@ use superconf::parse_str;
 
 let input = "my_key my_value";
 
-println!("Outputted HashMap: {:#?}", parse_str(input).unwrap());
+println!("{:#?}", parse(input).unwrap());
 ```
 
 Or if you'd like to use a custom seperator like `:` or `=`:
@@ -47,14 +47,6 @@ my_key the_value
 
 # you can use seperators as plaintext, just have to be backslashed
 your_path /home/user/Cool\ Path/x.txt
-
-# you can also have multiple levels
-# will be:
-# {"other_key": {"in_level": "see_it_is", "second_level": {"another": "level"}}}
-other_key
-    in_level see_it_is
-    second_level
-        another level
 ```
 
 ## Config Conventions
@@ -69,6 +61,11 @@ others. If it is undocumented, you may bunch all config parts together
 
 ## Motives
 
-Made this as a quick custom parser to challenge myself a bit and to use for
-a quick-n-dirty configuration format in the future. It's not the best file
+### Original motivations for creating
+
+Made this as a quick custom parser to challenge myself a bit and to use for a quick-n-dirty configuration format in the future. It's not the best file
 format in the world but it gets the job done.
+
+### Current/future motivations for maintaining
+
+Maintaining: This library is not being used inside of my [ipeer](https://github.com/owez/ipeer) p2p implementation for all `.ipeer` files so maintaining this library is critical.
