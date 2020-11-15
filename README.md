@@ -2,6 +2,9 @@
 
 A barebones configuration file made for low-dependency rust applications.
 
+- [Blog post](https://ogriffiths.com/2020/experimentation-with-markup-languages)
+- [Documentation](https://docs.rs/superconf)
+
 ## Usage
 
 Add to your `Cargo.toml` file:
@@ -54,12 +57,11 @@ your_path /home/user/Cool\ Path/x.txt
 Some conventions commonly used for superconf files:
 
 - The file naming scheme is `snake_case`
-- All superconf files should end in the `.super` file extension
 - Try to document each line with a comment
 - If commented, space each config part with an empty line seperating it from
 others. If it is undocumented, you may bunch all config parts together
 
-## Motives
+## Motivations
 
 ### Original motivations for creating
 
@@ -68,4 +70,4 @@ format in the world but it gets the job done.
 
 ### Current/future motivations for maintaining
 
-Maintaining: This library is not being used inside of my [ipeer](https://github.com/owez/ipeer) p2p implementation for all `.ipeer` files so maintaining this library is critical.
+Maintaining: This library is now being used inside of my [ipeer](https://github.com/owez/ipeer) p2p implementation for all `.ipeer` files so maintaining this library is critical.

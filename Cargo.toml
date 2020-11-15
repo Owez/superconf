@@ -4,6 +4,7 @@ description = "A barebones configuration file made for low-dependency rust appli
 version = "0.4.2"
 readme = "README.md"
 license = "MIT"
+keywords = ["configuration", "markup", "parser", "no-dependencies"]
 repository = "https://gitlab.com/Owez/superconf"
 authors = ["Owez <root@ogriffiths.com>"]
 edition = "2018"
