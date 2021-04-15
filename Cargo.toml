@@ -1,10 +1,14 @@
 [package]
 name = "superconf"
-description = "A barebones configuration file made for low-dependency rust applications."
-version = "0.4.3"
+description = "Barebones configuration format made for low-dependency applications"
+version = "1.0.0-pre.1"
 readme = "README.md"
 license = "MIT"
 keywords = ["configuration", "markup", "parser", "no-dependencies"]
 repository = "https://gitlab.com/Owez/superconf"
 authors = ["Owez <root@ogriffiths.com>"]
 edition = "2018"
+
+[features]
+default = ["std"]
+std = []
